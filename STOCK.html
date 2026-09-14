@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SEBULENI'S STOCKROOM LEDGER</title>
+  <title>SEBULENI'S STOCKROOM TAKER</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&display=swap"
@@ -555,7 +555,7 @@
 <body>
 
   <div id="gate">
-    <h1>SEBULENI'S STOCKROOM LEDGER</h1>
+    <h1>SEBULENI'S STOCKROOM TAKER</h1>
     <p>Enter the shared team passcode to continue.</p>
     <input type="password" id="passcodeInput" placeholder="Passcode" autofocus>
     <button id="gateBtn">Enter</button>
@@ -565,7 +565,7 @@
   <div class="wrap" id="app" style="display:none;">
     <header class="masthead">
       <div>
-        <h1>SEBULENI'S STOCKROOM LEDGER</h1>
+        <h1>SEBULENI'S STOCKROOM TAKERACKER 002</h1>
         <div class="sub">Fashion inventory, kept in order</div>
       </div>
       <div class="date-tag">
@@ -673,7 +673,7 @@
       function setDateTag() {
         var d = new Date();
         document.getElementById('dateTag').textContent =
-          'Count as of ' + d.toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'});
+          'Count as of ' + d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
       }
 
       function escapeHtml(str) {
@@ -735,7 +735,7 @@
 
         supabaseClient
           .channel('stock_items_changes')
-          .on('postgres_changes', {event: '*', schema: 'public', table: 'stock_items'}, function () {
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_items' }, function () {
             fetchItems();
           })
           .subscribe(function (status) {
@@ -753,7 +753,7 @@
         var result = await supabaseClient
           .from('stock_items')
           .select('*')
-          .order('created_at', {ascending: true});
+          .order('created_at', { ascending: true });
 
         if (result.error) {
           showBanner('Could not load stock data: ' + result.error.message);
@@ -772,7 +772,7 @@
       }
 
       async function updateQty(id, qty) {
-        var result = await supabaseClient.from('stock_items').update({qty: qty}).eq('id', id);
+        var result = await supabaseClient.from('stock_items').update({ qty: qty }).eq('id', id);
         if (result.error) showBanner('Could not update quantity: ' + result.error.message);
       }
 
@@ -823,10 +823,10 @@
         }
 
         document.getElementById('statTotal').textContent = items.length;
-        document.getElementById('statUnits').textContent = items.reduce(function (sum, it) {return sum + it.qty;}, 0);
-        document.getElementById('statLow').textContent = items.filter(function (it) {return it.qty <= it.reorder;}).length;
+        document.getElementById('statUnits').textContent = items.reduce(function (sum, it) { return sum + it.qty; }, 0);
+        document.getElementById('statLow').textContent = items.filter(function (it) { return it.qty <= it.reorder; }).length;
         var cats = {};
-        items.forEach(function (it) {if (it.category) cats[it.category.toLowerCase()] = true;});
+        items.forEach(function (it) { if (it.category) cats[it.category.toLowerCase()] = true; });
         document.getElementById('statCategories').textContent = Object.keys(cats).length;
       }
 
@@ -835,16 +835,16 @@
         if (!btn) return;
         var id = btn.getAttribute('data-id');
         var action = btn.getAttribute('data-action');
-        var item = items.find(function (it) {return String(it.id) === id;});
+        var item = items.find(function (it) { return String(it.id) === id; });
         if (!item) return;
 
         btn.disabled = true;
         if (action === 'inc') {
-          updateQty(id, item.qty + 1).then(function () {btn.disabled = false;});
+          updateQty(id, item.qty + 1).then(function () { btn.disabled = false; });
         } else if (action === 'dec') {
-          updateQty(id, Math.max(0, item.qty - 1)).then(function () {btn.disabled = false;});
+          updateQty(id, Math.max(0, item.qty - 1)).then(function () { btn.disabled = false; });
         } else if (action === 'delete') {
-          deleteItem(id).then(function () {btn.disabled = false;});
+          deleteItem(id).then(function () { btn.disabled = false; });
         }
       });
 
@@ -855,7 +855,7 @@
 
       document.querySelectorAll('.filter-toggle button').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          document.querySelectorAll('.filter-toggle button').forEach(function (b) {b.classList.remove('active');});
+          document.querySelectorAll('.filter-toggle button').forEach(function (b) { b.classList.remove('active'); });
           btn.classList.add('active');
           activeFilter = btn.getAttribute('data-filter');
           render();
@@ -872,7 +872,7 @@
         overlay.classList.add('open');
         document.getElementById('fName').focus();
       }
-      function closeModal() {overlay.classList.remove('open');}
+      function closeModal() { overlay.classList.remove('open'); }
       function clearFieldErrors() {
         document.getElementById('errName').classList.remove('show');
         document.getElementById('errQty').classList.remove('show');
@@ -881,8 +881,8 @@
 
       document.getElementById('addBtn').addEventListener('click', openModal);
       document.getElementById('cancelBtn').addEventListener('click', closeModal);
-      overlay.addEventListener('click', function (e) {if (e.target === overlay) closeModal();});
-      document.addEventListener('keydown', function (e) {if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();});
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal(); });
 
       document.getElementById('saveBtn').addEventListener('click', function () {
         var name = document.getElementById('fName').value.trim();
@@ -894,15 +894,15 @@
         clearFieldErrors();
         var valid = true;
 
-        if (!name) {document.getElementById('errName').classList.add('show'); valid = false;}
+        if (!name) { document.getElementById('errName').classList.add('show'); valid = false; }
         var qty = parseInt(qtyRaw, 10);
-        if (qtyRaw === '' || isNaN(qty) || qty < 0) {document.getElementById('errQty').classList.add('show'); valid = false;}
+        if (qtyRaw === '' || isNaN(qty) || qty < 0) { document.getElementById('errQty').classList.add('show'); valid = false; }
         var reorder = reorderRaw === '' ? 0 : parseInt(reorderRaw, 10);
-        if (isNaN(reorder) || reorder < 0) {document.getElementById('errReorder').classList.add('show'); valid = false;}
+        if (isNaN(reorder) || reorder < 0) { document.getElementById('errReorder').classList.add('show'); valid = false; }
 
         if (!valid) return;
 
-        addItem({name: name, sku: sku, category: category, qty: qty, reorder: reorder});
+        addItem({ name: name, sku: sku, category: category, qty: qty, reorder: reorder });
         closeModal();
       });
     })();
