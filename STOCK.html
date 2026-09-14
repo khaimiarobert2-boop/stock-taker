@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEBULENI'S STOCKROOM LEDGER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bone: #FAF8F3;
+      --paper: #FFFFFF;
+      --ink: #211D1A;
+      --taupe: #8A8073;
+      --taupe-light: #B4AC9F;
+      --hairline: #E2DCD1;
+      --hairline-strong: #CFC7B8;
+      --wine: #7A2E3A;
+      --sage: #4F5D45;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bone);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 56px 32px 96px;
+    }
+
+    #gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 24px;
+    }
+
+    #gate h1 {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: 32px;
+      margin: 0 0 6px;
+    }
+
+    #gate p {
+      color: var(--taupe);
+      font-size: 14px;
+      margin: 0 0 28px;
+    }
+
+    #gate input {
+      border: none;
+      border-bottom: 1px solid var(--hairline-strong);
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      padding: 10px 2px;
+      width: 240px;
+      text-align: center;
+      letter-spacing: 0.1em;
+    }
+
+    #gate input:focus {
+      outline: none;
+      border-bottom-color: var(--ink);
+    }
+
+    #gate button {
+      margin-top: 20px;
+      background: var(--ink);
+      color: var(--bone);
+      border: none;
+      padding: 11px 26px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    #gateError {
+      color: var(--wine);
+      font-size: 13px;
+      margin-top: 14px;
+      display: none;
+    }
+
+    #gateError.show {
+      display: block;
+    }
+
+    header.masthead {
+      border-bottom: 1px solid var(--ink);
+      padding-bottom: 20px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .masthead h1 {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: 40px;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .masthead .sub {
+      font-size: 13px;
+      color: var(--taupe);
+      margin-top: 6px;
+    }
+
+    .date-tag {
+      font-size: 12px;
+      color: var(--taupe);
+      text-align: right;
+      line-height: 1.5;
+    }
+
+    .sync-status {
+      font-size: 11px;
+      color: var(--sage);
+    }
+
+    .sync-status.offline {
+      color: var(--wine);
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 32px;
+    }
+
+    .stat {
+      padding: 18px 20px 18px 0;
+      border-right: 1px solid var(--hairline);
+    }
+
+    .stat:last-child {
+      border-right: none;
+    }
+
+    .stat .num {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 500;
+      display: block;
+    }
+
+    .stat .num.alert {
+      color: var(--wine);
+    }
+
+    .stat .label {
+      font-size: 11.5px;
+      color: var(--taupe);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar input[type="search"] {
+      border: none;
+      border-bottom: 1px solid var(--hairline-strong);
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      padding: 8px 2px;
+      width: 240px;
+      color: var(--ink);
+    }
+
+    .toolbar input[type="search"]:focus {
+      outline: none;
+      border-bottom-color: var(--ink);
+    }
+
+    .toolbar input[type="search"]::placeholder {
+      color: var(--taupe-light);
+    }
+
+    button.primary {
+      background: var(--ink);
+      color: var(--bone);
+      border: none;
+      padding: 10px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+    }
+
+    button.primary:hover {
+      background: #3a342e;
+    }
+
+    button.primary:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .filter-toggle {
+      display: flex;
+      gap: 2px;
+      font-size: 12.5px;
+    }
+
+    .filter-toggle button {
+      background: none;
+      border: 1px solid var(--hairline-strong);
+      color: var(--taupe);
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .filter-toggle button.active {
+      background: var(--ink);
+      color: var(--bone);
+      border-color: var(--ink);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--taupe);
+      font-weight: 500;
+      padding: 0 12px 10px 0;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    thead th.num-col {
+      text-align: right;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    tbody tr.low-stock {
+      border-left: 3px solid var(--wine);
+    }
+
+    tbody tr:not(.low-stock) {
+      border-left: 3px solid transparent;
+    }
+
+    tbody td {
+      padding: 14px 12px 14px 0;
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    tbody tr.low-stock td:first-child {
+      padding-left: 9px;
+    }
+
+    tbody tr:not(.low-stock) td:first-child {
+      padding-left: 12px;
+    }
+
+    .item-name {
+      font-family: 'Fraunces', serif;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .item-sku {
+      font-size: 12px;
+      color: var(--taupe);
+      margin-top: 2px;
+    }
+
+    .category-pill {
+      font-size: 11.5px;
+      color: var(--taupe);
+      border: 1px solid var(--hairline-strong);
+      padding: 3px 10px;
+      display: inline-block;
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .qty-controls button {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--hairline-strong);
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 15px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .qty-controls button:hover {
+      border-color: var(--ink);
+    }
+
+    .qty-controls button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .qty-controls .qty-val {
+      min-width: 28px;
+      text-align: center;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .status-text {
+      font-size: 12px;
+      text-align: right;
+      display: block;
+      margin-top: 3px;
+    }
+
+    .status-text.low {
+      color: var(--wine);
+    }
+
+    .status-text.ok {
+      color: var(--sage);
+    }
+
+    .reorder-col {
+      text-align: right;
+      color: var(--taupe);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .row-delete {
+      background: none;
+      border: none;
+      color: var(--taupe-light);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+    }
+
+    .row-delete:hover {
+      color: var(--wine);
+    }
+
+    .empty-state {
+      padding: 64px 0;
+      text-align: center;
+      color: var(--taupe);
+    }
+
+    .empty-state .eyebrow {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-size: 20px;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .banner {
+      background: #F7EBEC;
+      border: 1px solid var(--wine);
+      color: var(--wine);
+      padding: 14px 18px;
+      font-size: 13px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .banner.show {
+      display: block;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(33, 29, 26, 0.35);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 80px;
+      z-index: 10;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--paper);
+      width: 100%;
+      max-width: 420px;
+      padding: 32px;
+      border: 1px solid var(--ink);
+      margin: 0 16px;
+    }
+
+    .modal h2 {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 500;
+      font-size: 24px;
+      margin: 0 0 24px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--taupe);
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid var(--hairline-strong);
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      padding: 8px 2px;
+      color: var(--ink);
+    }
+
+    .field input:focus {
+      outline: none;
+      border-bottom-color: var(--ink);
+    }
+
+    .field-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .field-row .field {
+      flex: 1;
+    }
+
+    .field-error {
+      font-size: 12px;
+      color: var(--wine);
+      margin-top: 5px;
+      display: none;
+    }
+
+    .field-error.show {
+      display: block;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    button.ghost {
+      background: none;
+      border: 1px solid var(--hairline-strong);
+      color: var(--ink);
+      padding: 10px 18px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px;
+      cursor: pointer;
+    }
+
+    button.ghost:hover {
+      border-color: var(--ink);
+    }
+
+    @media (max-width:640px) {
+      .wrap {
+        padding: 32px 18px 64px;
+      }
+
+      .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stat:nth-child(2) {
+        border-right: none;
+      }
+
+      .stat {
+        border-bottom: 1px solid var(--hairline);
+        padding-bottom: 14px;
+        margin-bottom: 14px;
+      }
+
+      thead th:nth-child(3),
+      tbody td:nth-child(3) {
+        display: none;
+      }
+
+      .masthead {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .date-tag {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="gate">
+    <h1>SEBULENI'S STOCKROOM LEDGER</h1>
+    <p>Enter the shared team passcode to continue.</p>
+    <input type="password" id="passcodeInput" placeholder="Passcode" autofocus>
+    <button id="gateBtn">Enter</button>
+    <div id="gateError">That passcode isn't right. Try again.</div>
+  </div>
+
+  <div class="wrap" id="app" style="display:none;">
+    <header class="masthead">
+      <div>
+        <h1>SEBULENI'S STOCKROOM LEDGER</h1>
+        <div class="sub">Fashion inventory, kept in order</div>
+      </div>
+      <div class="date-tag">
+        <div id="dateTag"></div>
+        <div class="sync-status" id="syncStatus">Connecting…</div>
+      </div>
+    </header>
+
+    <div class="banner" id="errorBanner"></div>
+
+    <div class="stats-bar">
+      <div class="stat"><span class="num" id="statTotal">0</span><span class="label">Styles tracked</span></div>
+      <div class="stat"><span class="num" id="statUnits">0</span><span class="label">Total units</span></div>
+      <div class="stat"><span class="num alert" id="statLow">0</span><span class="label">Low stock</span></div>
+      <div class="stat"><span class="num" id="statCategories">0</span><span class="label">Categories</span></div>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="searchInput" placeholder="Search by name or SKU">
+      <div style="display:flex; gap:16px; align-items:center;">
+        <div class="filter-toggle">
+          <button class="active" data-filter="all">All</button>
+          <button data-filter="low">Low stock</button>
+        </div>
+        <button class="primary" id="addBtn">Add item</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34%;">Item</th>
+          <th>Category</th>
+          <th class="num-col">Reorder at</th>
+          <th class="num-col" style="width:200px;">Quantity on hand</th>
+          <th style="width:30px;"></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="eyebrow">The rail is bare</div>
+      <div id="emptyText">Add your first item to start counting stock.</div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>Add item</h2>
+      <div class="field">
+        <label for="fName">Item name</label>
+        <input id="fName" type="text" placeholder="Silk wrap blouse, ivory">
+        <div class="field-error" id="errName">Enter an item name.</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="fSku">SKU</label><input id="fSku" type="text" placeholder="WB-IVR-04"></div>
+        <div class="field"><label for="fCategory">Category</label><input id="fCategory" type="text" placeholder="Tops">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="fQty">Quantity on hand</label>
+          <input id="fQty" type="number" min="0" step="1" placeholder="0">
+          <div class="field-error" id="errQty">Enter a whole number, 0 or more.</div>
+        </div>
+        <div class="field">
+          <label for="fReorder">Reorder point</label>
+          <input id="fReorder" type="number" min="0" step="1" placeholder="5">
+          <div class="field-error" id="errReorder">Enter a whole number, 0 or more.</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="ghost" id="cancelBtn">Cancel</button>
+        <button class="primary" id="saveBtn">Save item</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var SUPABASE_URL = 'https://cullmizxtmkgskbcpmwd.supabase.co';
+      var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1bGxtaXp4dG1rZ3NrYmNwbXdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNTMxODAsImV4cCI6MjEwNDkyOTE4MH0.1wGSwvdaxLGIOX_hnRDzzNad7xfq8X2Tweut78q75Ok';
+      var TEAM_PASSCODE = 'SEBULENI2';
+
+      var supabaseClient = null;
+      var items = [];
+      var activeFilter = 'all';
+      var searchTerm = '';
+
+      var tableBody = document.getElementById('tableBody');
+      var emptyState = document.getElementById('emptyState');
+      var overlay = document.getElementById('overlay');
+      var errorBanner = document.getElementById('errorBanner');
+      var syncStatus = document.getElementById('syncStatus');
+
+      function showBanner(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.classList.add('show');
+      }
+      function hideBanner() {
+        errorBanner.classList.remove('show');
+      }
+
+      function setDateTag() {
+        var d = new Date();
+        document.getElementById('dateTag').textContent =
+          'Count as of ' + d.toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'});
+      }
+
+      function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+      }
+
+      document.getElementById('gateBtn').addEventListener('click', tryEnter);
+      document.getElementById('passcodeInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') tryEnter();
+      });
+
+      function tryEnter() {
+        var val = document.getElementById('passcodeInput').value;
+        if (val === TEAM_PASSCODE) {
+          document.getElementById('gate').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+          sessionStorage.setItem('ledger-auth', '1');
+          init();
+        } else {
+          document.getElementById('gateError').classList.add('show');
+        }
+      }
+
+      if (sessionStorage.getItem('ledger-auth') === '1') {
+        document.getElementById('gate').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        init();
+      }
+
+      function init() {
+        setDateTag();
+
+        if (typeof supabase === 'undefined') {
+          showBanner('The database library failed to load. Check your internet connection and reload the page.');
+          syncStatus.textContent = 'Not connected';
+          syncStatus.classList.add('offline');
+          return;
+        }
+
+        if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+          showBanner('This app is not connected to a database yet.');
+          syncStatus.textContent = 'Not connected';
+          syncStatus.classList.add('offline');
+          return;
+        }
+
+        try {
+          supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+          showBanner('Could not connect to the database: ' + e.message);
+          syncStatus.textContent = 'Not connected';
+          syncStatus.classList.add('offline');
+          return;
+        }
+
+        fetchItems();
+
+        supabaseClient
+          .channel('stock_items_changes')
+          .on('postgres_changes', {event: '*', schema: 'public', table: 'stock_items'}, function () {
+            fetchItems();
+          })
+          .subscribe(function (status) {
+            if (status === 'SUBSCRIBED') {
+              syncStatus.textContent = 'Synced live with your team';
+              syncStatus.classList.remove('offline');
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+              syncStatus.textContent = 'Sync interrupted, retrying…';
+              syncStatus.classList.add('offline');
+            }
+          });
+      }
+
+      async function fetchItems() {
+        var result = await supabaseClient
+          .from('stock_items')
+          .select('*')
+          .order('created_at', {ascending: true});
+
+        if (result.error) {
+          showBanner('Could not load stock data: ' + result.error.message);
+          syncStatus.textContent = 'Not connected';
+          syncStatus.classList.add('offline');
+          return;
+        }
+        hideBanner();
+        items = result.data;
+        render();
+      }
+
+      async function addItem(item) {
+        var result = await supabaseClient.from('stock_items').insert([item]);
+        if (result.error) showBanner('Could not save item: ' + result.error.message);
+      }
+
+      async function updateQty(id, qty) {
+        var result = await supabaseClient.from('stock_items').update({qty: qty}).eq('id', id);
+        if (result.error) showBanner('Could not update quantity: ' + result.error.message);
+      }
+
+      async function deleteItem(id) {
+        var result = await supabaseClient.from('stock_items').delete().eq('id', id);
+        if (result.error) showBanner('Could not delete item: ' + result.error.message);
+      }
+
+      function render() {
+        var filtered = items.filter(function (it) {
+          var matchesSearch = !searchTerm ||
+            it.name.toLowerCase().indexOf(searchTerm) !== -1 ||
+            (it.sku || '').toLowerCase().indexOf(searchTerm) !== -1;
+          var matchesFilter = activeFilter === 'all' || (activeFilter === 'low' && it.qty <= it.reorder);
+          return matchesSearch && matchesFilter;
+        });
+
+        tableBody.innerHTML = '';
+
+        if (filtered.length === 0) {
+          emptyState.style.display = 'block';
+          document.getElementById('emptyText').textContent =
+            items.length === 0 ? 'Add your first item to start counting stock.' : 'Nothing matches that search.';
+        } else {
+          emptyState.style.display = 'none';
+          filtered.forEach(function (it) {
+            var isLow = it.qty <= it.reorder;
+            var tr = document.createElement('tr');
+            tr.className = isLow ? 'low-stock' : '';
+            tr.innerHTML =
+              '<td>' +
+              '<div class="item-name">' + escapeHtml(it.name) + '</div>' +
+              (it.sku ? '<div class="item-sku">' + escapeHtml(it.sku) + '</div>' : '') +
+              '</td>' +
+              '<td>' + (it.category ? '<span class="category-pill">' + escapeHtml(it.category) + '</span>' : '') + '</td>' +
+              '<td class="reorder-col">' + it.reorder + '</td>' +
+              '<td>' +
+              '<div class="qty-controls">' +
+              '<button data-action="dec" data-id="' + it.id + '" aria-label="Decrease quantity">–</button>' +
+              '<span class="qty-val">' + it.qty + '</span>' +
+              '<button data-action="inc" data-id="' + it.id + '" aria-label="Increase quantity">+</button>' +
+              '</div>' +
+              '<span class="status-text ' + (isLow ? 'low' : 'ok') + '">' + (isLow ? 'Reorder now' : 'In stock') + '</span>' +
+              '</td>' +
+              '<td><button class="row-delete" data-action="delete" data-id="' + it.id + '" aria-label="Delete item">&times;</button></td>';
+            tableBody.appendChild(tr);
+          });
+        }
+
+        document.getElementById('statTotal').textContent = items.length;
+        document.getElementById('statUnits').textContent = items.reduce(function (sum, it) {return sum + it.qty;}, 0);
+        document.getElementById('statLow').textContent = items.filter(function (it) {return it.qty <= it.reorder;}).length;
+        var cats = {};
+        items.forEach(function (it) {if (it.category) cats[it.category.toLowerCase()] = true;});
+        document.getElementById('statCategories').textContent = Object.keys(cats).length;
+      }
+
+      tableBody.addEventListener('click', function (e) {
+        var btn = e.target.closest('button');
+        if (!btn) return;
+        var id = btn.getAttribute('data-id');
+        var action = btn.getAttribute('data-action');
+        var item = items.find(function (it) {return String(it.id) === id;});
+        if (!item) return;
+
+        btn.disabled = true;
+        if (action === 'inc') {
+          updateQty(id, item.qty + 1).then(function () {btn.disabled = false;});
+        } else if (action === 'dec') {
+          updateQty(id, Math.max(0, item.qty - 1)).then(function () {btn.disabled = false;});
+        } else if (action === 'delete') {
+          deleteItem(id).then(function () {btn.disabled = false;});
+        }
+      });
+
+      document.getElementById('searchInput').addEventListener('input', function (e) {
+        searchTerm = e.target.value.trim().toLowerCase();
+        render();
+      });
+
+      document.querySelectorAll('.filter-toggle button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.filter-toggle button').forEach(function (b) {b.classList.remove('active');});
+          btn.classList.add('active');
+          activeFilter = btn.getAttribute('data-filter');
+          render();
+        });
+      });
+
+      function openModal() {
+        document.getElementById('fName').value = '';
+        document.getElementById('fSku').value = '';
+        document.getElementById('fCategory').value = '';
+        document.getElementById('fQty').value = '';
+        document.getElementById('fReorder').value = '';
+        clearFieldErrors();
+        overlay.classList.add('open');
+        document.getElementById('fName').focus();
+      }
+      function closeModal() {overlay.classList.remove('open');}
+      function clearFieldErrors() {
+        document.getElementById('errName').classList.remove('show');
+        document.getElementById('errQty').classList.remove('show');
+        document.getElementById('errReorder').classList.remove('show');
+      }
+
+      document.getElementById('addBtn').addEventListener('click', openModal);
+      document.getElementById('cancelBtn').addEventListener('click', closeModal);
+      overlay.addEventListener('click', function (e) {if (e.target === overlay) closeModal();});
+      document.addEventListener('keydown', function (e) {if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();});
+
+      document.getElementById('saveBtn').addEventListener('click', function () {
+        var name = document.getElementById('fName').value.trim();
+        var sku = document.getElementById('fSku').value.trim();
+        var category = document.getElementById('fCategory').value.trim();
+        var qtyRaw = document.getElementById('fQty').value;
+        var reorderRaw = document.getElementById('fReorder').value;
+
+        clearFieldErrors();
+        var valid = true;
+
+        if (!name) {document.getElementById('errName').classList.add('show'); valid = false;}
+        var qty = parseInt(qtyRaw, 10);
+        if (qtyRaw === '' || isNaN(qty) || qty < 0) {document.getElementById('errQty').classList.add('show'); valid = false;}
+        var reorder = reorderRaw === '' ? 0 : parseInt(reorderRaw, 10);
+        if (isNaN(reorder) || reorder < 0) {document.getElementById('errReorder').classList.add('show'); valid = false;}
+
+        if (!valid) return;
+
+        addItem({name: name, sku: sku, category: category, qty: qty, reorder: reorder});
+        closeModal();
+      });
+    })();
+  </script>
+</body>
+
+</html>
