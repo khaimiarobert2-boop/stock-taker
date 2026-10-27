@@ -680,7 +680,6 @@
           <th>Category</th>
           <th class="num-col">Reorder at</th>
           <th class="num-col" style="width:200px;">Quantity on hand</th>
-          <th style="width:30px;"></th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
@@ -816,6 +815,7 @@
           .channel('stock_items_changes')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_items' }, function () {
             fetchItems();
+            setInterval(fetchItems, 15000);
           })
           .subscribe(function (status) {
             if (status === 'SUBSCRIBED') {
@@ -847,12 +847,20 @@
 
       async function addItem(item) {
         var result = await supabaseClient.from('stock_items').insert([item]);
-        if (result.error) showBanner('Could not save item: ' + result.error.message);
+        if (result.error) { showBanner('Could not save item: ' + result.error.message); return; }
+        await fetchItems();
       }
 
+
       async function updateQty(id, qty) {
+        var item = items.find(function (it) { return String(it.id) === String(id); });
+        var oldQty = item ? item.qty : null;
+        if (item) { item.qty = qty; render(); }
         var result = await supabaseClient.from('stock_items').update({ qty: qty }).eq('id', id);
-        if (result.error) showBanner('Could not update quantity: ' + result.error.message);
+        if (result.error) {
+          if (item && oldQty !== null) { item.qty = oldQty; render(); }
+          showBanner('Could not update quantity: ' + result.error.message);
+        }
       }
 
       async function deleteItem(id) {
@@ -895,8 +903,7 @@
               '<button data-action="inc" data-id="' + it.id + '" aria-label="Increase quantity">+</button>' +
               '</div>' +
               '<span class="status-text ' + (isLow ? 'low' : 'ok') + '">' + (isLow ? 'Reorder now' : 'In stock') + '</span>' +
-              '</td>' +
-              '<td><button class="row-delete" data-action="delete" data-id="' + it.id + '" aria-label="Delete item">&times;</button></td>';
+              '</td>';
             tableBody.appendChild(tr);
           });
         }
